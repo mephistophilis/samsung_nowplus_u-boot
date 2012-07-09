@@ -229,9 +229,9 @@ int nowplus_kp_getc(void);
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	"mtdparts=" MTDPARTS_DEFAULT "\0" \
 	"usbtty=cdc_acm\0" \
-	"stdin=vga\0" \
-	"stdout=vga\0" \
-	"stderr=vga\0" \
+	"stdin=usbtty\0" \
+	"stdout=usbtty\0" \
+	"stderr=usbtty\0" \
 	"setcon=setenv stdin ${con};" \
 		"setenv stdout ${con};" \
 		"setenv stderr ${con}\0" \
