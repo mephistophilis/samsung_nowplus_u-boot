@@ -74,6 +74,24 @@ int board_init(void)
 	return 0;
 }
 
+/* get boot mode store in OMAP343X_SCRATCHPAD by linux kernel
+ -> can boot direct to recovery
+ */
+char bootmode_get_cmd(void)
+{
+	u32 tmp = readl( OMAP343X_SCRATCHPAD + 4);
+	char bootmode[2] = {0};
+//tmp=0x424d0072;     // = recovery
+	if((((tmp>>24)&0xff) == 'B') && (((tmp>>16)&0xff) == 'M'))
+		bootmode[0] = tmp&0xff;
+	else
+		bootmode[0] = 'd';
+
+	setenv("bootmode", bootmode);
+	return bootmode[0];
+}
+
+#ifdef CONFIG_VIDEO
 /*
  * Routine: video_hw_init
  * Description: Set up the GraphicDevice depending on sys_boot.
@@ -81,10 +99,20 @@ int board_init(void)
 void *video_hw_init(void)
 {
 	/* fill in Graphic Device */
-	u32 fbaddr = readl( DISPC_GFX_BA0);
+
 	u32 BytesPP = 4;
 	u32 memsize = 800*480*BytesPP;
-	gdev.frameAdrs = FB_ADDR;
+
+// ugly hack: move to some memory region
+// where fb doesnt get distorted by kernel initlization
+// kernel does own allocation anyways
+	u32 fbaddr = 0x8c800000;
+	writel(readl(DISPC_GFX_ATTRIBUTES) & ~(0x1), DISPC_GFX_ATTRIBUTES);
+	writel(fbaddr, DISPC_GFX_BA0);
+	writel(readl(DISPC_GFX_ATTRIBUTES) | (0x1), DISPC_GFX_ATTRIBUTES);
+	writel(readl(DISPC_CONTROL) | (1<<5), DISPC_CONTROL);
+
+	gdev.frameAdrs = fbaddr;
 	gdev.winSizeX = 480;
 	gdev.winSizeY = 800;
 	gdev.gdfBytesPP = BytesPP;
@@ -93,6 +121,40 @@ void *video_hw_init(void)
 	return (void *) &gdev;
 }
 
+#ifdef CONFIG_CONSOLE_EXTRA_INFO
+void video_get_info_str(int line_number, char *info)
+{
+    char bootcmd = bootmode_get_cmd();
+    char *bootmode = NULL;
+
+    switch(bootcmd)
+    {
+        case 'r':
+            bootmode = "Recovery";
+            break;
+        case 'b':
+            bootmode = "Bootloader";
+            break;
+        case 'd':
+        	bootmode = "Default";
+        	
+        	break;
+    }
+
+    switch (line_number) {
+         case 2:
+            sprintf(info, " Boot mode: %s", bootmode);
+            break;
+        case 3:
+            sprintf(info, " 2012 - r3d4 edition");
+            break;
+         default:
+            info[0] = 0;
+    }
+}
+#endif
+
+#endif 
 /*
  * Routine: twl4030_regulator_set_mode
  * Description: Set twl4030 regulator mode over i2c powerbus.
@@ -117,7 +179,6 @@ int misc_init_r(void)
 	u32 oe;
 	u32 dat;
 	struct gpio *gpio5_base = (struct gpio *)OMAP34XX_GPIO5_BASE;
-	struct control_prog_io *prog_io_base = (struct control_prog_io *)OMAP34XX_CTRL_BASE;
 
 	/* initialize twl4030 power managment */
 	twl4030_power_init();
@@ -142,8 +203,8 @@ int misc_init_r(void)
 	oe = readl(&gpio5_base->oe);
 	dat = readl(&gpio5_base->setdataout);
 	//switch to OMAP USB
-	writel(readl(&gpio5_base->setdataout) & ~(GPIO150), &gpio5_base->setdataout);   // lo
-	writel(readl(&gpio5_base->oe) & ~(GPIO150), &gpio5_base->oe);      //output    
+	writel(readl(&gpio5_base->setdataout) & ~(GPIO150), &gpio5_base->setdataout);	// lo
+	writel(readl(&gpio5_base->oe) & ~(GPIO150), &gpio5_base->oe);	//output    
 
 	/* set env variable nowplus_kernaddr for calculated address of kernel */
 	sprintf(buf, "%#x", nowplus_kernaddr);
@@ -261,9 +322,6 @@ int nowplus_kp_init(void)
 
 static void nowplus_kp_fill(u8 k)
 {
-	char str[256] = {0};
-	sprintf(str,"%d",k);
-	puts(str);
 	if ((k == 5 || k == 8)) {
 		/* cursor keys, without fn */
 		keybuf[keybuf_tail++] = '\e';

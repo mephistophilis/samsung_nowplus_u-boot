@@ -338,7 +338,9 @@ void main_loop (void)
 #if defined(CONFIG_HUSH_INIT_VAR)
 	hush_init_var ();
 #endif
-
+#if defined(GET_BOOT_MODE)
+	GET_BOOT_MODE;
+#endif
 #ifdef CONFIG_PREBOOT
 	if ((p = getenv ("preboot")) != NULL) {
 # ifdef CONFIG_AUTOBOOT_KEYED

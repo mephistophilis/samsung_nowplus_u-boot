@@ -32,7 +32,6 @@ extern u32 nowplus_kernaddr; /* attached kernel address */
 #define DISPC_CONTROL           0x48050440
 #define DISPC_GFX_ATTRIBUTES    0x480504A0
 #define DISPC_GFX_BA0           0x48050480
-#define FB_ADDR                 0x8fc00000
 
 #define OMAP343X_SCRATCHPAD		0x48002910
 
@@ -42,7 +41,7 @@ extern u32 nowplus_kernaddr; /* attached kernel address */
 #define KEY_FRONT               0
 #define KEY_PHONE               '\r'
 #define KEY_EXIT                '\e'
-#define KEY_SEARCH              1
+#define KEY_SEARCH              0
 #define KEY_VOLUMEUP            0
 #define KEY_CAMERA_FOCUS        0
 #define KEY_CAMERA              0
@@ -60,9 +59,21 @@ extern u32 nowplus_kernaddr; /* attached kernel address */
  */
 
 /* #define MUX_NOWPLUS MUX_NOWPLUS_ALL */
-#define MUX_NOWPLUS MUX_NOWPLUS_MMC
+#define MUX_NOWPLUS MUX_NOWPLUS_BASIC
 
-#define MUX_NOWPLUS_MMC() \
+#define MUX_NOWPLUS_BASIC() \
+	MUX_VAL(CP(HSUSB0_CLK),		(IEN | PTD | EN | M0)) \
+	MUX_VAL(CP(HSUSB0_STP),		(IEN | PTD | EN | M0)) \
+	MUX_VAL(CP(HSUSB0_DIR),		(IEN | PTD | EN | M0)) \
+	MUX_VAL(CP(HSUSB0_NXT),		(IEN | PTD | EN | M0)) \
+	MUX_VAL(CP(HSUSB0_DATA0),	(IEN | PTD | EN | M0)) \
+	MUX_VAL(CP(HSUSB0_DATA1),	(IEN | PTD | EN | M0)) \
+	MUX_VAL(CP(HSUSB0_DATA2),	(IEN | PTD | EN | M0)) \
+	MUX_VAL(CP(HSUSB0_DATA3),	(IEN | PTD | EN | M0)) \
+	MUX_VAL(CP(HSUSB0_DATA4),	(IEN | PTD | EN | M0)) \
+	MUX_VAL(CP(HSUSB0_DATA5),	(IEN | PTD | EN | M0)) \
+	MUX_VAL(CP(HSUSB0_DATA6),	(IEN | PTD | EN | M0)) \
+	MUX_VAL(CP(HSUSB0_DATA7),	(IEN | PTD | EN | M0)) \
 	MUX_VAL(CP(MMC1_CLK),		(IDIS | PTU | DIS | M0)) \
 	MUX_VAL(CP(MMC1_CMD),		(IDIS | PTU | DIS | M0)) \
 	MUX_VAL(CP(MMC1_DAT0),		(IEN  | PTU | EN  | M0)) \

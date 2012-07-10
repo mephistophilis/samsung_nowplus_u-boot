@@ -68,7 +68,8 @@
 
 #undef CONFIG_USE_IRQ				/* no support for IRQs */
 #define CONFIG_MISC_INIT_R
-#define CONFIG_SKIP_LOWLEVEL_INIT		/* NOLO set everything up */
+//#define CONFIG_SKIP_LOWLEVEL_INIT		/* NOLO set everything up */
+#define CONFIG_SKIP_DPLL4_INIT	/* don't init/change DPLL4: fix display issues */
 
 #define CONFIG_CMDLINE_TAG	/* enable passing kernel command line string */
 #define CONFIG_INITRD_TAG			/* enable passing initrd */
@@ -78,9 +79,7 @@
  * Size of malloc() pool
  */
 #define CONFIG_ENV_SIZE			(128 << 10)	/* 128 KiB Sector */
-#define CONFIG_UBI_SIZE			(512 << 10)	/* 512 KiB Sector */
-#define CONFIG_SYS_MALLOC_LEN		(CONFIG_ENV_SIZE + CONFIG_UBI_SIZE + \
-					(128 << 10))
+#define CONFIG_SYS_MALLOC_LEN		(CONFIG_ENV_SIZE + (128 << 10))
 
 /*
  * Hardware drivers
@@ -120,8 +119,6 @@
 
 /* USB device configuration */
 #define CONFIG_USB_DEVICE
-/* Maemo kernel 2.6.28 will crash if u-boot enable usb tty */
-
 #define CONFIG_USB_TTY
 
 #define CONFIG_USBD_VENDORID		0x04e8
@@ -134,7 +131,7 @@
 
 /* OneNand support is disabled, because U-Boot image is too big */
 /* Uncomment next line to enable it */
-/* #define ONENAND_SUPPORT */
+#define ONENAND_SUPPORT
 
 /* commands to include */
 #include <config_cmd_default.h>
@@ -155,9 +152,9 @@
 
 #ifdef ONENAND_SUPPORT
 #define CONFIG_CMD_ONENAND		/* NAND support */
-#define CONFIG_CMD_MTDPARTS		/* mtd parts support */
-#define CONFIG_CMD_UBI			/* UBI Support */
-#define CONFIG_CMD_UBIFS		/* UBIFS Support */
+//#define CONFIG_CMD_MTDPARTS		/* mtd parts support */
+//#define CONFIG_CMD_UBI			/* UBI Support */
+//#define CONFIG_CMD_UBIFS		/* UBIFS Support */
 #endif
 
 #undef CONFIG_CMD_FPGA			/* FPGA configuration Support */
@@ -192,9 +189,9 @@
 #define CONFIG_RBTREE
 #define CONFIG_LZO
 #define MTDIDS_DEFAULT			"onenand0=onenand"
-#define MTDPARTS_DEFAULT		"mtdparts=onenand:128k(bootloader)," \
-					"384k(config),256k(log),2m(kernel)," \
-					"2m(initfs),-(rootfs)"
+#define MTDPARTS_DEFAULT		"mtdparts=onenand:384k@0x12C0000(splash),256k(misc)," \
+					"5m(recovery),5m(boot),164m(system)," \
+					"5m(cache),300m(userdata)"
 #else
 #define MTDPARTS_DEFAULT
 #endif
@@ -210,10 +207,9 @@
 #define CONFIG_CFB_CONSOLE
 #define CONFIG_CFB_CONSOLE_ANSI	 /* Enable ANSI escape codes in framebuffer */
 #define CONFIG_VIDEO_LOGO
-//#define VIDEO_FB_16BPP_PIXEL_SWAP
-//#define VIDEO_FB_16BPP_WORD_SWAP
 #define CONFIG_VIDEO_SW_CURSOR
 #define CONFIG_SPLASH_SCREEN
+#define CONFIG_CONSOLE_EXTRA_INFO
 
 /* functions for cfb_console */
 #define VIDEO_KBD_INIT_FCT		nowplus_kp_init()
@@ -225,24 +221,33 @@ int nowplus_kp_tstc(void);
 int nowplus_kp_getc(void);
 #endif
 
+#define GET_BOOT_MODE bootmode_get_cmd()
+
+#define DEFAULT_BOOTARG    "mem=256M " \
+		"videoout=omap_vout omap_vout.video1_numbuffers=6 " \
+		"omap_vout.vid1_static_vrfb_alloc=y omapfb.vram=\"0:4M\" ${mtdparts}"
+
 /* Environment information */
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	"mtdparts=" MTDPARTS_DEFAULT "\0" \
 	"usbtty=cdc_acm\0" \
-	"stdin=usbtty\0" \
-	"stdout=usbtty\0" \
-	"stderr=usbtty\0" \
+	"stdin=vga\0" \
+	"stdout=vga\0" \
+	"stderr=vga\0" \
 	"setcon=setenv stdin ${con};" \
 		"setenv stdout ${con};" \
 		"setenv stderr ${con}\0" \
 	"sercon=setenv con serial; run setcon\0" \
 	"usbcon=setenv con usbtty; run setcon\0" \
 	"vgacon=setenv con vga; run setcon\0" \
-	"slide=gpio input 71\0" \
+	"power=gpio input 24\0" \
 	"switchmmc=mmc dev ${mmcnum}\0" \
+	"mtdbootaddr=0x1860000\0" \
+	"mtdrecoveryaddr=0x1360000\0" \
 	"kernaddr=0x82008000\0" \
-	"initrdaddr=0x84008000\0" \
-	"scriptaddr=0x86008000\0" \
+	"initrdaddr=0x87008000\0" \
+	"scriptaddr=0x88008000\0" \
+	"onenandload=onenand read ${kernaddr} ${mtdaddr} 0x500000\0" \
 	"fileload=${mmctype}load mmc ${mmcnum}:${mmcpart} " \
 		"${loadaddr} ${mmcfile}\0" \
 	"kernload=setenv loadaddr ${kernaddr};" \
@@ -261,7 +266,6 @@ int nowplus_kp_getc(void);
 	"kerninitrdboot=echo Booting ${mmckernfile} ${mmcinitrdfile} from mmc "\
 		"${mmcnum}:${mmcpart} ...; bootm ${kernaddr} ${initrdaddr}\0" \
 	"attachboot=echo Booting attached kernel image ...;" \
-		"setenv atagaddr 0x80000100;" \
 		"bootm ${nowplus_kernaddr}\0" \
 	"trymmcscriptboot=if run switchmmc; then " \
 			"if run scriptload; then " \
@@ -294,45 +298,56 @@ int nowplus_kp_getc(void);
 			"setenv mmctype ext4;" \
 			"run trymmcallpartboot;" \
 		"fi\0" \
+	"tryonenandboot=if run onenandload; then " \
+			"bootm ${kernaddr};" \
+	"fi\0" \
+	"onenandboot=echo Booting from internal nand ...;" \
+			"setenv bootargs " DEFAULT_BOOTARG ";" \
+			"setenv mtdaddr ${mtdbootaddr};" \
+			"run tryonenandboot\0" \
+	"recoveryboot=echo Booting recovery ...;" \
+			"setenv bootargs " DEFAULT_BOOTARG ";" \
+			"setenv mtdaddr ${mtdrecoveryaddr};" \
+			"run tryonenandboot\0" \
+	"rescueboot=echo Booting attached rescue recovery ...;" \
+			"setenv bootargs " DEFAULT_BOOTARG ";" \
+			"run attachboot;\0" \
 	"emmcboot=setenv mmcnum 1; run trymmcboot\0" \
 	"sdboot=setenv mmcnum 0; run trymmcboot\0" \
 	"menucmd=bootmenu\0" \
-	"bootmenu_0=Attached kernel=run attachboot\0" \
-	"bootmenu_1=Internal eMMC=run emmcboot\0" \
-	"bootmenu_2=External SD card=run sdboot\0" \
-	"bootmenu_3=Set console to USB=run usbcon\0" \
-	"bootmenu_4=U-Boot boot order=boot\0" \
-	"bootmenu_delay=30\0" \
+	"bootmenu_0=Onenand=run onenandboot\0" \
+	"bootmenu_1=Recovery=run recoveryboot\0" \
+	"bootmenu_2=Rescue Recovery=run rescueboot\0" \
+	"bootmenu_3=Internal eMMC=run emmcboot\0" \
+	"bootmenu_4=External SD card=run sdboot\0" \
+	"bootmenu_5=Set console to USB=run usbcon\0" \
+	"bootmenu_6=U-Boot boot order=boot\0" \
+	"bootmenu_delay=0\0" \
 	""
-
+    
 #define CONFIG_PREBOOT \
-	"if run slide; then " \
-		"setenv mmcnum 1; setenv mmcpart 1; setenv mmctype fat;" \
-		"setenv mmcscriptfile bootmenu.scr;" \
-		"run trymmcscriptboot;" \
+	"if test ${bootmode} = \"d\"; then " \
+		"if run power; then " \
+			"setenv bootmenu_delay 0;" \
+		"else " \
+			"setenv bootmenu_delay 30;" \
+		"fi;" \
 	"else " \
-		"setenv bootmenu_delay 0;" \
+		"if test ${bootmode} = \"r\"; then " \
+			"run recoveryboot;" \
+			"run rescueboot;" \
+		"fi;" \
+		"if test ${bootmode} = \"b\"; then " \
+			"setenv bootmenu_delay 30;" \
+		"fi;" \
 	"fi"
 
-#define CONFIG_PREMONITOR \
-	"echo Extra commands:;" \
-	"echo run sercon - Use serial port for control.;" \
-	"echo run usbcon - Use usbtty for control.;" \
-	"echo run vgacon - Use framebuffer/keyboard.;" \
-	"echo run sdboot - Boot from SD card slot.;" \
-	"echo run emmcboot - Boot internal eMMC memory.;" \
-	"echo run attachboot - Boot attached kernel image.;" \
-	"echo"
+#undef CONFIG_PREMONITOR
 
-#if 0
 #define CONFIG_BOOTCOMMAND \
-	"run sdboot;" \
-	"run emmcboot;" \
-	"run attachboot;" \
-	"echo"
-#endif
-	
-#define CONFIG_BOOTCOMMAND \
+	"run onenandboot;" \
+	"run recoveryboot;" \
+	"run rescueboot;" \
 	"echo"
 
 #define CONFIG_MENUCMD
@@ -340,7 +355,7 @@ int nowplus_kp_getc(void);
 /*
  * Miscellaneous configurable options
  */
-#define CONFIG_SYS_LONGHELP			/* undef to save memory */
+#undef CONFIG_SYS_LONGHELP			/* undef to save memory */
 #define CONFIG_SYS_HUSH_PARSER			/* use "hush" command parser */
 #define CONFIG_SYS_PROMPT_HUSH_PS2	"> "
 #define CONFIG_SYS_PROMPT		"Samsung Nowplus # "
