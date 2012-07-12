@@ -189,7 +189,7 @@
 #define CONFIG_RBTREE
 #define CONFIG_LZO
 #define MTDIDS_DEFAULT			"onenand0=onenand"
-#define MTDPARTS_DEFAULT		"mtdparts=onenand:384k@0x12C0000(splash),256k(misc)," \
+#define MTDPARTS_DEFAULT		"mtdparts=omap2-onenand:384k@0x12C0000(splash),256k(misc)," \
 					"5m(recovery),5m(boot),164m(system)," \
 					"5m(cache),300m(userdata)"
 #else
