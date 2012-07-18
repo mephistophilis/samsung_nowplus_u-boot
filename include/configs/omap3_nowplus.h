@@ -322,6 +322,7 @@ int nowplus_kp_getc(void);
 	"bootmenu_4=External SD card=run sdboot\0" \
 	"bootmenu_5=Set console to USB=run usbcon\0" \
 	"bootmenu_6=U-Boot boot order=boot\0" \
+	"bootmenu_7=Reset=reset\0" \
 	"bootmenu_delay=0\0" \
 	""
     

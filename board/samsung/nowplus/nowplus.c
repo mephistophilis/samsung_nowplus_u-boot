@@ -124,10 +124,11 @@ void *video_hw_init(void)
 #ifdef CONFIG_CONSOLE_EXTRA_INFO
 void video_get_info_str(int line_number, char *info)
 {
-    char bootcmd = bootmode_get_cmd();
+    char bootcmd[2] = {0};
+    bootcmd[0] = bootmode_get_cmd();
     char *bootmode = NULL;
 
-    switch(bootcmd)
+    switch(bootcmd[0])
     {
         case 'r':
             bootmode = "Recovery";
@@ -137,7 +138,9 @@ void video_get_info_str(int line_number, char *info)
             break;
         case 'd':
         	bootmode = "Default";
-        	
+        	break;
+        default:
+        	bootmode = bootcmd;
         	break;
     }
 
