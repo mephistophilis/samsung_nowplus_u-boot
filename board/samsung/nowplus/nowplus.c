@@ -83,10 +83,25 @@ char bootmode_get_cmd(void)
 	char bootmode[2] = {0};
 //tmp=0x424d0072;     // = recovery
 	if((((tmp>>24)&0xff) == 'B') && (((tmp>>16)&0xff) == 'M'))
+    {
 		bootmode[0] = tmp&0xff;
-	else
-		bootmode[0] = 'd';
-
+        
+        switch(bootmode[0])
+        {
+        	case 'r':
+            case 'b':
+            	break;
+            default:
+            	bootmode[0] = 'h';
+                break;
+        }
+        
+    }
+    else
+    {
+    	bootmode[0] = 'h';
+    }
+    
 	setenv("bootmode", bootmode);
 	return bootmode[0];
 }
@@ -136,20 +151,14 @@ void video_get_info_str(int line_number, char *info)
         case 'b':
             bootmode = "Bootloader";
             break;
-        case 'd':
+        case 'h':
         	bootmode = "Default";
-        	break;
-        default:
-        	bootmode = bootcmd;
         	break;
     }
 
     switch (line_number) {
          case 2:
             sprintf(info, " Boot mode: %s", bootmode);
-            break;
-        case 3:
-            sprintf(info, " 2012 - r3d4 edition");
             break;
          default:
             info[0] = 0;

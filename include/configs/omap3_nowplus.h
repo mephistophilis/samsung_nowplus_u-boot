@@ -223,7 +223,7 @@ int nowplus_kp_getc(void);
 
 #define GET_BOOT_MODE bootmode_get_cmd()
 
-#define DEFAULT_BOOTARG    "mem=256M " \
+#define DEFAULT_BOOTARG    "androidboot.mode=normal mem=256M " \
 		"videoout=omap_vout omap_vout.video1_numbuffers=6 " \
 		"omap_vout.vid1_static_vrfb_alloc=y omapfb.vram=\"0:4M\" ${mtdparts}"
 
@@ -322,12 +322,12 @@ int nowplus_kp_getc(void);
 	"bootmenu_4=External SD card=run sdboot\0" \
 	"bootmenu_5=Set console to USB=run usbcon\0" \
 	"bootmenu_6=U-Boot boot order=boot\0" \
-	"bootmenu_7=Reset=reset\0" \
+	"bootmenu_7=Reboot=reset\0" \
 	"bootmenu_delay=0\0" \
 	""
     
 #define CONFIG_PREBOOT \
-	"if test ${bootmode} = \"d\"; then " \
+	"if test ${bootmode} = \"h\"; then " \
 		"if run power; then " \
 			"setenv bootmenu_delay 0;" \
 		"else " \
