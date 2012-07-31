@@ -189,9 +189,8 @@
 #define CONFIG_RBTREE
 #define CONFIG_LZO
 #define MTDIDS_DEFAULT			"onenand0=onenand"
-#define MTDPARTS_DEFAULT		"mtdparts=omap2-onenand:384k@0x12C0000(splash),256k(misc)," \
-					"5m(recovery),5m(boot),164m(system)," \
-					"5m(cache),300m(userdata)"
+#define MTDPARTS_DEFAULT		"mtdparts=omap2-onenand:640k@0x12C0000(misc)," \
+					"5m(boot),164m(system),10m(cache),300m(userdata)"
 #else
 #define MTDPARTS_DEFAULT
 #endif
@@ -242,8 +241,7 @@ int nowplus_kp_getc(void);
 	"vgacon=setenv con vga; run setcon\0" \
 	"power=gpio input 24\0" \
 	"switchmmc=mmc dev ${mmcnum}\0" \
-	"mtdbootaddr=0x1860000\0" \
-	"mtdrecoveryaddr=0x1360000\0" \
+	"mtdbootaddr=0x1360000\0" \
 	"kernaddr=0x82008000\0" \
 	"initrdaddr=0x87008000\0" \
 	"scriptaddr=0x88008000\0" \
@@ -305,11 +303,7 @@ int nowplus_kp_getc(void);
 			"setenv bootargs " DEFAULT_BOOTARG ";" \
 			"setenv mtdaddr ${mtdbootaddr};" \
 			"run tryonenandboot\0" \
-	"recoveryboot=echo Booting recovery ...;" \
-			"setenv bootargs " DEFAULT_BOOTARG ";" \
-			"setenv mtdaddr ${mtdrecoveryaddr};" \
-			"run tryonenandboot\0" \
-	"rescueboot=echo Booting attached rescue recovery ...;" \
+	"recoveryboot=echo Booting attached rescue recovery ...;" \
 			"setenv bootargs " DEFAULT_BOOTARG ";" \
 			"run attachboot;\0" \
 	"emmcboot=setenv mmcnum 1; run trymmcboot\0" \
@@ -317,12 +311,11 @@ int nowplus_kp_getc(void);
 	"menucmd=bootmenu\0" \
 	"bootmenu_0=Onenand=run onenandboot\0" \
 	"bootmenu_1=Recovery=run recoveryboot\0" \
-	"bootmenu_2=Rescue Recovery=run rescueboot\0" \
-	"bootmenu_3=Internal eMMC=run emmcboot\0" \
-	"bootmenu_4=External SD card=run sdboot\0" \
-	"bootmenu_5=Set console to USB=run usbcon\0" \
-	"bootmenu_6=U-Boot boot order=boot\0" \
-	"bootmenu_7=Reboot=reset\0" \
+	"bootmenu_2=Internal eMMC=run emmcboot\0" \
+	"bootmenu_3=External SD card=run sdboot\0" \
+	"bootmenu_4=Set console to USB=run usbcon\0" \
+	"bootmenu_5=U-Boot boot order=boot\0" \
+	"bootmenu_6=Reboot=reset\0" \
 	"bootmenu_delay=0\0" \
 	""
     
@@ -336,7 +329,6 @@ int nowplus_kp_getc(void);
 	"else " \
 		"if test ${bootmode} = \"r\"; then " \
 			"run recoveryboot;" \
-			"run rescueboot;" \
 		"fi;" \
 		"if test ${bootmode} = \"b\"; then " \
 			"setenv bootmenu_delay 30;" \
@@ -348,7 +340,6 @@ int nowplus_kp_getc(void);
 #define CONFIG_BOOTCOMMAND \
 	"run onenandboot;" \
 	"run recoveryboot;" \
-	"run rescueboot;" \
 	"echo"
 
 #define CONFIG_MENUCMD
