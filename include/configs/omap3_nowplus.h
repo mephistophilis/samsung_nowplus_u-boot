@@ -303,7 +303,7 @@ int nowplus_kp_getc(void);
 			"setenv bootargs " DEFAULT_BOOTARG ";" \
 			"setenv mtdaddr ${mtdbootaddr};" \
 			"run tryonenandboot\0" \
-	"recoveryboot=echo Booting attached rescue recovery ...;" \
+	"recoveryboot=echo Booting attached recovery ...;" \
 			"setenv bootargs " DEFAULT_BOOTARG ";" \
 			"run attachboot;\0" \
 	"emmcboot=setenv mmcnum 1; run trymmcboot\0" \
@@ -314,8 +314,7 @@ int nowplus_kp_getc(void);
 	"bootmenu_2=Internal eMMC=run emmcboot\0" \
 	"bootmenu_3=External SD card=run sdboot\0" \
 	"bootmenu_4=Set console to USB=run usbcon\0" \
-	"bootmenu_5=U-Boot boot order=boot\0" \
-	"bootmenu_6=Reboot=reset\0" \
+	"bootmenu_5=Reboot=reset\0" \
 	"bootmenu_delay=0\0" \
 	""
     
